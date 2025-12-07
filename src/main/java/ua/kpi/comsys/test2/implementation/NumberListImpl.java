@@ -584,6 +584,14 @@ public class NumberListImpl implements NumberList {
         modCount++;
     }
 
+    /**
+     * Initializes list by parsing decimal string.
+     * <p>
+     * Handles optional leading '+' sign, leading zeroes and rejects negative
+     * numbers or strings with non-digit characters.
+     *
+     * @param value decimal string representation of number
+     */
     private void initializeFromDecimalString(String value) {
         clear();
         if (value == null) {
@@ -600,6 +608,19 @@ public class NumberListImpl implements NumberList {
         populateFromBigInteger(number);
     }
 
+    /**
+     * Normalizes decimal string:
+     * <ul>
+     *     <li>trims whitespace,</li>
+     *     <li>removes leading '+',</li>
+     *     <li>rejects negative values,</li>
+     *     <li>checks that all characters are digits,</li>
+     *     <li>removes leading zeros leaving at least one digit.</li>
+     * </ul>
+     *
+     * @param value input string
+     * @return normalized string or {@code null} if invalid
+     */
     private String normalizeDecimal(String value) {
         String trimmed = value.trim();
         if (trimmed.isEmpty()) {
@@ -626,6 +647,13 @@ public class NumberListImpl implements NumberList {
         return trimmed.substring(firstNonZero);
     }
 
+    /**
+     * Populates list from non-negative {@link BigInteger} value
+     * in current radix.
+     *
+     * @param number number to convert; if {@code null} or negative,
+     *               list becomes empty
+     */
     private void populateFromBigInteger(BigInteger number) {
         clear();
         if (number == null || number.signum() < 0) {
@@ -654,6 +682,11 @@ public class NumberListImpl implements NumberList {
         }
     }
 
+    /**
+     * Appends new digit at the end of the doubly-linked list.
+     *
+     * @param value digit value to append
+     */
     private void linkLast(byte value) {
         Node newNode = new Node(value);
         Node previous = tail;
@@ -668,6 +701,12 @@ public class NumberListImpl implements NumberList {
         modCount++;
     }
 
+    /**
+     * Inserts new digit before specified node in the list.
+     *
+     * @param value digit value to insert
+     * @param node  node before which new element is inserted
+     */
     private void linkBefore(byte value, Node node) {
         Node previous = node.prev;
         Node newNode = new Node(value);
@@ -683,6 +722,12 @@ public class NumberListImpl implements NumberList {
         modCount++;
     }
 
+    /**
+     * Unlinks specified node from the list and returns its digit value.
+     *
+     * @param node node to remove
+     * @return digit that was stored in the node
+     */
     private Byte unlink(Node node) {
         byte element = node.value;
         Node next = node.next;
@@ -708,6 +753,12 @@ public class NumberListImpl implements NumberList {
         return element;
     }
 
+    /**
+     * Checks that digit belongs to the valid range for this radix.
+     *
+     * @param value digit value to check
+     * @throws IllegalArgumentException if digit is outside range [0, radix)
+     */
     private void checkDigitRange(byte value) {
         if (value < 0 || value >= radix) {
             throw new IllegalArgumentException(
@@ -716,6 +767,15 @@ public class NumberListImpl implements NumberList {
         }
     }
 
+    /**
+     * Returns node located at specified index.
+     * <p>
+     * Traversal direction (from head or tail) is chosen based on index
+     * position to minimize number of steps.
+     *
+     * @param index index of node to retrieve
+     * @return node at given index
+     */
     private Node nodeAt(int index) {
         if (index < (size >> 1)) {
             Node node = head;
@@ -732,10 +792,22 @@ public class NumberListImpl implements NumberList {
         }
     }
 
+    /**
+     * Checks whether specified index refers to existing element.
+     *
+     * @param index index to check
+     * @return {@code true} if index is in range [0, size), {@code false} otherwise
+     */
     private boolean isElementIndex(int index) {
         return index >= 0 && index < size;
     }
 
+    /**
+     * Validates that specified index refers to existing element.
+     *
+     * @param index index to check
+     * @throws IndexOutOfBoundsException if index is not in range [0, size)
+     */
     private void checkElementIndex(int index) {
         if (!isElementIndex(index)) {
             throw new IndexOutOfBoundsException(
@@ -744,6 +816,13 @@ public class NumberListImpl implements NumberList {
         }
     }
 
+    /**
+     * Validates that specified index refers to valid position where element
+     * can be inserted.
+     *
+     * @param index index to check
+     * @throws IndexOutOfBoundsException if index is not in range [0, size]
+     */
     private void checkPositionIndex(int index) {
         if (index < 0 || index > size) {
             throw new IndexOutOfBoundsException(
@@ -752,10 +831,22 @@ public class NumberListImpl implements NumberList {
         }
     }
 
+    /**
+     * Converts digit value to character representation using
+     * {@link #DIGITS} table.
+     *
+     * @param digit digit value
+     * @return character corresponding to the digit
+     */
     private char toDigitChar(byte digit) {
         return DIGITS.charAt(digit);
     }
 
+    /**
+     * Converts internal digit list to {@link BigInteger} using current radix.
+     *
+     * @return numeric value of this list as {@link BigInteger}
+     */
     private BigInteger toBigInteger() {
         if (isEmpty()) {
             return BigInteger.ZERO;
@@ -770,6 +861,15 @@ public class NumberListImpl implements NumberList {
         return total;
     }
 
+    /**
+     * Converts arbitrary {@link NumberList} to {@link BigInteger}.
+     * <p>
+     * If {@code list} is {@code NumberListImpl}, its radix is used.
+     * Otherwise digits are treated as decimal digits.
+     *
+     * @param list number list to convert
+     * @return numeric value as {@link BigInteger}
+     */
     private static BigInteger numberListToBigInteger(NumberList list) {
         if (list == null) {
             return BigInteger.ZERO;
@@ -788,6 +888,12 @@ public class NumberListImpl implements NumberList {
         return total;
     }
 
+    /**
+     * List iterator implementation for {@link NumberListImpl}.
+     * <p>
+     * Supports bidirectional traversal, element removal and insertion
+     * and provides fail-fast behavior when list is modified concurrently.
+     */
     private class ListItr implements ListIterator<Byte> {
 
         private Node next;
